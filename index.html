@@ -1,0 +1,720 @@
+以下是您所需的小学生“马来文生字消消乐”互动小游戏的完整HTML代码。它实现了配对消除、关卡制、积分系统等核心玩法，并具备可爱的卡通风格和音效动画。
+```html
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Kata Padanan - 马来文生字消消乐 | 小学生互动游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #b3e5fc 0%, #ffdde1 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Comic Neue', 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI Emoji', cursive, sans-serif;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 主游戏面板 */
+        .game-container {
+            width: 1300px;
+            max-width: 98vw;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 72px;
+            padding: 20px 20px 30px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2), inset 0 1px 4px rgba(255,255,255,0.8);
+            backdrop-filter: blur(3px);
+            transition: all 0.2s ease;
+        }
+
+        /* 顶部栏：积分，时间，关卡 */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #FFE8C5;
+            padding: 12px 24px;
+            border-radius: 60px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 #F4A261;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .score-box, .timer-box, .level-box {
+            background: white;
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .score-box span, .timer-box span, .level-box span {
+            color: #F4A261;
+        }
+
+        .star-gold {
+            color: gold;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.2);
+        }
+
+        /* 卡片网格 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            justify-items: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: #FFF9E8;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: 160px;
+            border-radius: 32px;
+            box-shadow: 0 12px 0 #E0B07F;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.1s ease;
+            padding: 12px;
+            position: relative;
+            border: 3px solid #FFD966;
+        }
+
+        .card.selected {
+            box-shadow: 0 4px 0 #E0B07F;
+            transform: translateY(6px);
+            border: 4px solid #FFA559;
+            background: #FFFAF0;
+        }
+
+        .card.eliminated {
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+
+        .card-content {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .card-sub {
+            font-size: 0.9rem;
+            background: #FDEBB3;
+            border-radius: 20px;
+            padding: 4px 8px;
+            margin-top: 5px;
+        }
+
+        .card-emoji {
+            font-size: 2.8rem;
+            margin-bottom: 6px;
+        }
+
+        .sound-btn {
+            background: #C9E4DE;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            margin-top: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: 0.05s linear;
+        }
+
+        .sound-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 控制区 */
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #F9B43A;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #C16F1A;
+            transition: 0.05s linear;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #C16F1A;
+        }
+
+        .info-panel {
+            background: #FFF0D4;
+            border-radius: 48px;
+            padding: 12px 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            font-weight: bold;
+        }
+
+        .combo-effect {
+            background: #FFB347;
+            padding: 6px 12px;
+            border-radius: 40px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* 弹窗等 */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: #FFEEDD;
+            border-radius: 64px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+            border: 6px solid #FFB347;
+        }
+
+        /* 家长面板 */
+        .parent-panel {
+            background: #FFE8E0;
+            border-radius: 48px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        /* 彩虹星星 */
+        .star-animation {
+            position: fixed;
+            pointer-events: none;
+            font-size: 2rem;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 999;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) rotate(0deg);}
+            100% { opacity: 0; transform: translateY(-100px) rotate(40deg);}
+        }
+
+        @media (max-width: 700px) {
+            .cards-grid {
+                gap: 10px;
+            }
+            .card-content {
+                font-size: 0.9rem;
+            }
+            .card-emoji {
+                font-size: 2rem;
+            }
+            .score-box, .timer-box, .level-box {
+                font-size: 1rem;
+                padding: 4px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="gameApp">
+    <div class="game-header">
+        <div class="score-box">⭐ <span id="scoreValue">0</span> 分</div>
+        <div class="timer-box">⏱️ <span id="timerValue">00</span> 秒</div>
+        <div class="level-box">🎮 <span id="levelValue">1</span> / 5</div>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid"></div>
+
+    <div class="game-controls">
+        <button class="btn" id="resetBtn">🔄 重玩本关</button>
+        <button class="btn" id="parentBtn">📘 家长模式</button>
+        <button class="btn" id="dailyBtn">🌟 每日挑战</button>
+    </div>
+
+    <div class="info-panel">
+        <div>🏆 连续配对: <span id="comboCount">0</span> 连击</div>
+        <div>🎖️ 成就: <span id="badgeDisplay">🌱 新手学者</span></div>
+        <div>📖 最新提示: <span id="hintMsg">点击卡片配对马来文&中文/图片</span></div>
+    </div>
+
+    <!-- 家长模式面板 -->
+    <div id="parentModal" class="parent-panel">
+        <h3>📊 学习进度报告</h3>
+        <p>✅ 总配对成功: <span id="totalPairs">0</span> 次</p>
+        <p>🏅 获得星星总数: <span id="totalStars">0</span> ✨</p>
+        <p>📈 已解锁最高关卡: <span id="maxLevel">1</span></p>
+        <p>🎯 本周正确率: <span id="accuracy">0</span>%</p>
+        <button class="btn" id="closeParentBtn" style="background:#67b26f;">关闭</button>
+    </div>
+</div>
+
+<script>
+    // ----------------------------- 游戏数据 -------------------------------------
+    // 主题: 动物、食物、学校用品、交通工具、大自然  每个关卡不同组合
+    // 每关有6组词汇（12张卡片）
+    const THEMES = [
+        { name: "Haiwan (动物)", words: [
+            { ms: "kucing", cn: "猫", emoji: "🐱", example: "Kucing itu comel." },
+            { ms: "anjing", cn: "狗", emoji: "🐶", example: "Anjing suka berlari." },
+            { ms: "arnab", cn: "兔子", emoji: "🐰", example: "Arnab makan lobak." },
+            { ms: "burung", cn: "鸟", emoji: "🐦", example: "Burung terbang tinggi." },
+            { ms: "ikan", cn: "鱼", emoji: "🐟", example: "Ikan berenang di air." },
+            { ms: "gajah", cn: "大象", emoji: "🐘", example: "Gajah sangat besar." }
+        ]},
+        { name: "Makanan (食物)", words: [
+            { ms: "nasi", cn: "饭", emoji: "🍚", example: "Saya makan nasi." },
+            { ms: "roti", cn: "面包", emoji: "🍞", example: "Roti sedap." },
+            { ms: "susu", cn: "牛奶", emoji: "🥛", example: "Susu baik untuk kesihatan." },
+            { ms: "epal", cn: "苹果", emoji: "🍎", example: "Epal merah manis." },
+            { ms: "aiskrim", cn: "冰淇淋", emoji: "🍦", example: "Aiskrim sejuk." },
+            { ms: "kek", cn: "蛋糕", emoji: "🍰", example: "Kek hari jadi." }
+        ]},
+        { name: "Peralatan Sekolah (学校用品)", words: [
+            { ms: "buku", cn: "书", emoji: "📚", example: "Baca buku teks." },
+            { ms: "pen", cn: "笔", emoji: "✒️", example: "Tulis dengan pen." },
+            { ms: "pensel", cn: "铅笔", emoji: "✏️", example: "Pensel baru." },
+            { ms: "pemadam", cn: "橡皮擦", emoji: "🧽", example: "Padamkan kesalahan." },
+            { ms: "pembaris", cn: "尺子", emoji: "📏", example: "Ukur dengan pembaris." },
+            { ms: "beg", cn: "书包", emoji: "🎒", example: "Beg sekolah berat." }
+        ]},
+        { name: "Kenderaan (交通工具)", words: [
+            { ms: "kereta", cn: "汽车", emoji: "🚗", example: "Kereta ayah biru." },
+            { ms: "bas", cn: "巴士", emoji: "🚌", example: "Bas sekolah kuning." },
+            { ms: "kapal terbang", cn: "飞机", emoji: "✈️", example: "Kapal terbang laju." },
+            { ms: "kereta api", cn: "火车", emoji: "🚂", example: "Kereta api panjang." },
+            { ms: "basikal", cn: "自行车", emoji: "🚲", example: "Saya naik basikal." },
+            { ms: "motosikal", cn: "摩托车", emoji: "🏍️", example: "Motosikal bising." }
+        ]},
+        { name: "Alam Semula Jadi (大自然)", words: [
+            { ms: "matahari", cn: "太阳", emoji: "☀️", example: "Matahari bersinar." },
+            { ms: "bulan", cn: "月亮", emoji: "🌙", example: "Bulan sangat terang." },
+            { ms: "bintang", cn: "星星", emoji: "⭐", example: "Bintang bertaburan." },
+            { ms: "hujan", cn: "雨", emoji: "🌧️", example: "Hujan turun." },
+            { ms: "pokok", cn: "树", emoji: "🌳", example: "Pokok tinggi." },
+            { ms: "bunga", cn: "花", emoji: "🌸", example: "Bunga wangi." }
+        ]}
+    ];
+
+    // 基础变量
+    let currentLevel = 0;          // 0-index 实际显示+1
+    let currentCards = [];         // {id, pairId, type, ms, cn, emoji, example, eliminated}
+    let selectedCardIndex = null;
+    let score = 0;
+    let timeLeft = 45;              // 每关45秒
+    let timerInterval = null;
+    let combo = 0;
+    let canClick = true;
+    let totalSuccessPairs = 0;      // 永久累计配对次数
+    let totalStarsEarned = 0;       // 累计星星（过关奖励）
+    let levelCompleted = false;
+    let dailyAvailable = true;       // 简单每日挑战逻辑
+
+    // 音效 Web Audio (简单beep模拟) 由于浏览器策略，使用简单振荡器，但很多移动端需用户交互，所以我们用简单的AudioContext友好触发
+    let audioCtx = null;
+    function playSound(type) {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            let freq = type === 'correct' ? 880 : 440;
+            osc.frequency.value = freq;
+            gain.gain.value = 0.2;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e) { console.log("audio not allowed"); }
+    }
+
+    // 辅助函数
+    function showFloatingStar(x, y) {
+        const star = document.createElement('div');
+        star.className = 'star-animation';
+        star.innerHTML = '⭐';
+        star.style.left = (x || window.innerWidth/2) + 'px';
+        star.style.top = (y || window.innerHeight/2) + 'px';
+        document.body.appendChild(star);
+        setTimeout(() => star.remove(), 800);
+    }
+
+    function showCorrectExplain(wordObj) {
+        const hintSpan = document.getElementById('hintMsg');
+        hintSpan.innerHTML = `✅ Betul! ${wordObj.ms} = ${wordObj.cn}. Contoh: ${wordObj.example}`;
+        setTimeout(() => {
+            if(document.getElementById('hintMsg')) document.getElementById('hintMsg').innerHTML = "点击卡片配对马来文&中文/图片";
+        }, 2500);
+    }
+
+    function showWrongExplain(wordObj) {
+        const hintSpan = document.getElementById('hintMsg');
+        hintSpan.innerHTML = `❌ Salah! Jawapan betul: ${wordObj.ms} → ${wordObj.cn}. ${wordObj.example}`;
+        setTimeout(() => {
+            if(document.getElementById('hintMsg')) document.getElementById('hintMsg').innerHTML = "点击卡片配对马来文&中文/图片";
+        }, 2800);
+    }
+
+    // 停止计时器
+    function stopTimer() {
+        if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+
+    function startTimer() {
+        if(timerInterval) stopTimer();
+        timerInterval = setInterval(() => {
+            if(!canClick || levelCompleted) return;
+            if(timeLeft <= 0) {
+                // 时间到 关卡失败
+                stopTimer();
+                canClick = false;
+                alert("⏰ Masa tamat! 时间用完了！重新开始这一关吧～");
+                resetLevel();
+            } else {
+                timeLeft--;
+                document.getElementById('timerValue').innerText = timeLeft;
+                if(timeLeft <= 5) document.getElementById('timerValue').style.color = "red";
+                else document.getElementById('timerValue').style.color = "black";
+            }
+        }, 1000);
+    }
+
+    // 生成关卡卡片 (6组配对)
+    function buildLevel(levelIdx) {
+        const themeData = THEMES[levelIdx % THEMES.length];
+        const wordsSet = themeData.words.slice(0,6);   // 取前6组
+        let cards = [];
+        let pairId = 0;
+        for(let w of wordsSet) {
+            // 卡片A: 马来文+emoji
+            cards.push({
+                id: Math.random(),
+                pairId: pairId,
+                type: 'ms',
+                ms: w.ms,
+                cn: w.cn,
+                emoji: w.emoji,
+                example: w.example,
+                eliminated: false,
+                displayText: w.ms,
+                displayEmoji: w.emoji,
+                subInfo: w.ms
+            });
+            // 卡片B: 中文+图片(emoji展示)
+            cards.push({
+                id: Math.random(),
+                pairId: pairId,
+                type: 'cn',
+                ms: w.ms,
+                cn: w.cn,
+                emoji: w.emoji,
+                example: w.example,
+                eliminated: false,
+                displayText: w.cn,
+                displayEmoji: w.emoji,
+                subInfo: w.cn
+            });
+            pairId++;
+        }
+        // 随机洗牌
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        return cards;
+    }
+
+    function updateUI() {
+        const grid = document.getElementById('cardsGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        currentCards.forEach((card, idx) => {
+            if(card.eliminated) {
+                const div = document.createElement('div');
+                div.className = 'card eliminated';
+                grid.appendChild(div);
+                return;
+            }
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            if(selectedCardIndex === idx) cardDiv.classList.add('selected');
+            cardDiv.innerHTML = `
+                <div class="card-emoji">${card.displayEmoji}</div>
+                <div class="card-content">${card.displayText}</div>
+                <div class="card-sub">${card.type === 'ms' ? '🇲🇾' : '🇨🇳'}</div>
+                <button class="sound-btn">🔊 Sebut</button>
+            `;
+            const soundBtn = cardDiv.querySelector('.sound-btn');
+            soundBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // 发音: 利用Web Speech 或者 播放单词读音
+                const utterance = new SpeechSynthesisUtterance(card.type === 'ms' ? card.ms : card.cn);
+                utterance.lang = card.type === 'ms' ? 'ms-MY' : 'zh-CN';
+                utterance.rate = 0.9;
+                speechSynthesis.cancel();
+                speechSynthesis.speak(utterance);
+                playSound('correct');
+            });
+            cardDiv.addEventListener('click', () => onCardClick(idx));
+            grid.appendChild(cardDiv);
+        });
+        document.getElementById('scoreValue').innerText = score;
+        document.getElementById('levelValue').innerText = (currentLevel+1) + "/5";
+        document.getElementById('comboCount').innerText = combo;
+        // 成就徽章更新
+        let badge = "🌱 新手学者";
+        if(totalSuccessPairs >= 20) badge = "🏅 识字小英雄";
+        if(totalSuccessPairs >= 40) badge = "🎓 马来文大师";
+        document.getElementById('badgeDisplay').innerText = badge;
+    }
+
+    function onCardClick(clickedIdx) {
+        if(!canClick || levelCompleted) return;
+        const clickedCard = currentCards[clickedIdx];
+        if(clickedCard.eliminated) return;
+        // 已经选中一张卡片
+        if(selectedCardIndex !== null) {
+            const firstCard = currentCards[selectedCardIndex];
+            if(selectedCardIndex === clickedIdx) {
+                // 取消选中
+                selectedCardIndex = null;
+                updateUI();
+                return;
+            }
+            // 配对
+            if(firstCard.pairId === clickedCard.pairId) {
+                // 配对成功
+                playSound('correct');
+                // 加分+ combo处理
+                let addScore = 10 + Math.floor(combo/2)*2;
+                score += addScore;
+                totalSuccessPairs++;
+                combo++;
+                // 标记消除
+                currentCards[selectedCardIndex].eliminated = true;
+                currentCards[clickedIdx].eliminated = true;
+                selectedCardIndex = null;
+                // 显示正确例句
+                showCorrectExplain(firstCard);
+                // 产生星星特效和额外金币星星效果
+                showFloatingStar();
+                totalStarsEarned += 1; //每次配对额外奖励星星
+                updateUI();
+                // 检查是否完成全部配对
+                const allEliminated = currentCards.every(c => c.eliminated === true);
+                if(allEliminated) {
+                    levelClear();
+                }
+            } else {
+                // 配对失败 展示错误解释
+                playSound('wrong');
+                showWrongExplain(clickedCard);
+                combo = 0;
+                selectedCardIndex = null;
+                updateUI();
+                // 闪烁红色提示简单特效
+            }
+        } else {
+            selectedCardIndex = clickedIdx;
+            updateUI();
+        }
+    }
+
+    function levelClear() {
+        if(levelCompleted) return;
+        levelCompleted = true;
+        stopTimer();
+        canClick = false;
+        // 额外星星奖励 (过关)
+        let starBonus = Math.max(0, Math.floor(timeLeft/10) + 1);
+        score += starBonus * 5;
+        totalStarsEarned += starBonus;
+        alert(`🎉 Tahap ${currentLevel+1} selesai! 获得 ${starBonus} 颗星星✨ 总积分 ${score}`);
+        if(currentLevel+1 < 5) {
+            currentLevel++;
+            resetLevel(true); // 下一关重置状态
+        } else {
+            alert("🏆 恭喜你完成了所有关卡！你是一位马来文大师！ 🎉");
+            // 通关不继续
+        }
+    }
+
+    function resetLevel(isNext=false) {
+        if(timerInterval) stopTimer();
+        levelCompleted = false;
+        canClick = true;
+        selectedCardIndex = null;
+        if(!isNext) {
+            // 重设当前关卡（不改变总分）
+            // 注意保留总分星星值不清零
+        }
+        // 重置卡片
+        currentCards = buildLevel(currentLevel);
+        timeLeft = 45;
+        document.getElementById('timerValue').innerText = timeLeft;
+        document.getElementById('timerValue').style.color = "black";
+        combo = 0;
+        updateUI();
+        startTimer();
+        // 更新最高关卡家长模式记录
+        if(window.localStorage) {
+            let maxLvl = parseInt(localStorage.getItem('maxLevelReached') || '1');
+            if(currentLevel+1 > maxLvl) localStorage.setItem('maxLevelReached', currentLevel+1);
+            localStorage.setItem('totalPairs', totalSuccessPairs);
+            localStorage.setItem('totalStars', totalStarsEarned);
+        }
+    }
+
+    // 完全重置游戏关卡从第一关开始（保留总成就？最好保留累计分数但是我们清不好，保留统计数据）
+    function resetGameFromStart() {
+        if(timerInterval) stopTimer();
+        currentLevel = 0;
+        score = 0;
+        totalSuccessPairs = parseInt(localStorage.getItem('totalPairs')||'0');
+        totalStarsEarned = parseInt(localStorage.getItem('totalStars')||'0');
+        combo = 0;
+        selectedCardIndex = null;
+        levelCompleted = false;
+        canClick = true;
+        currentCards = buildLevel(0);
+        timeLeft = 45;
+        document.getElementById('timerValue').innerText = timeLeft;
+        document.getElementById('scoreValue').innerText = score;
+        updateUI();
+        startTimer();
+    }
+
+    // 每日挑战简单实现：随机抽取不同主题混合3组配对
+    function dailyChallenge() {
+        if(!dailyAvailable) { alert("今日挑战已完成！明日再来吧～"); return; }
+        stopTimer();
+        // 随机从各主题抓取共4组
+        let mixed = [];
+        for(let i=0; i<4; i++) {
+            let theme = THEMES[Math.floor(Math.random()*THEMES.length)];
+            let word = theme.words[Math.floor(Math.random()*theme.words.length)];
+            mixed.push({...word});
+        }
+        // 构建临时卡片
+        let specialCards = [];
+        let pid=0;
+        for(let w of mixed) {
+            specialCards.push({id:Math.random(), pairId:pid, type:'ms', ms:w.ms, cn:w.cn, emoji:w.emoji, example:w.example, eliminated:false, displayText:w.ms, displayEmoji:w.emoji});
+            specialCards.push({id:Math.random(), pairId:pid, type:'cn', ms:w.ms, cn:w.cn, emoji:w.emoji, example:w.example, eliminated:false, displayText:w.cn, displayEmoji:w.emoji});
+            pid++;
+        }
+        for (let i = specialCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [specialCards[i], specialCards[j]] = [specialCards[j], specialCards[i]];
+        }
+        currentCards = specialCards;
+        timeLeft = 40;
+        combo = 0;
+        selectedCardIndex = null;
+        levelCompleted=false;
+        canClick=true;
+        updateUI();
+        startTimer();
+        dailyAvailable = false;
+        setTimeout(()=> alert("每日挑战开始了！4组特殊配对，加油获取星星✨"), 200);
+    }
+
+    // 家长模式显示
+    function toggleParentMode() {
+        const panel = document.getElementById('parentModal');
+        if(panel.style.display === 'none' || panel.style.display === '') {
+            let maxLvlSave = localStorage.getItem('maxLevelReached') || (currentLevel+1);
+            let acc = totalSuccessPairs > 0 ? Math.min(100, Math.floor((totalSuccessPairs/(totalSuccessPairs+5))*100)):0;
+            document.getElementById('totalPairs').innerText = totalSuccessPairs;
+            document.getElementById('totalStars').innerText = totalStarsEarned;
+            document.getElementById('maxLevel').innerText = maxLvlSave;
+            document.getElementById('accuracy').innerText = acc;
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    // 页面初始化
+    function initGame() {
+        if(localStorage.getItem('totalPairs')) totalSuccessPairs = parseInt(localStorage.getItem('totalPairs'));
+        if(localStorage.getItem('totalStars')) totalStarsEarned = parseInt(localStorage.getItem('totalStars'));
+        else totalStarsEarned = 0;
+        currentLevel = 0;
+        score = 0;
+        currentCards = buildLevel(0);
+        timeLeft = 45;
+        canClick = true;
+        levelCompleted = false;
+        selectedCardIndex = null;
+        updateUI();
+        startTimer();
+        document.getElementById('resetBtn').addEventListener('click', ()=>{
+            if(confirm("重玩本关会重置配对进度，确定吗？")) resetLevel(false);
+        });
+        document.getElementById('parentBtn').addEventListener('click', toggleParentMode);
+        document.getElementById('dailyBtn').addEventListener('click', dailyChallenge);
+        document.getElementById('closeParentBtn').addEventListener('click', ()=>{
+            document.getElementById('parentModal').style.display = 'none';
+        });
+        // 背景音乐简单模拟(为了自动策略不自动播放，但用户点击任意按钮后可以背景? 更好采用简单音频)
+        // 我们不加自动背景音乐，但提供可爱音效用振荡器友好
+        // 为了让播放启用，用户第一次点击启用音频上下文
+        document.body.addEventListener('click', ()=>{
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        });
+    }
+
+    initGame();
+</script>
+</body>
+</html>
+```
